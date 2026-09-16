@@ -1,0 +1,153 @@
+Approach
+I first represent every valid collection of segments using their endpoints:
+
+x1 < x2 <= x3 < x4 <= ... < x(2k-1) < x(2k)
+The endpoints are integers from 0 to n - 1.
+
+Now I transform every endpoint:
+
+y1 = x1
+y2 = x2 - 1
+y3 = x3 - 1
+y4 = x4 - 2
+y5 = x5 - 2
+y6 = x6 - 3
+...
+This is exactly the same as:
+
+yi = xi - floor(i / 2)
+The important part is what happens to the inequalities.
+
+For example:
+
+x1 < x2
+becomes:
+
+x1 <= x2 - 1
+so:
+
+y1 <= y2
+Similarly:
+
+x2 <= x3
+becomes:
+
+x2 - 1 <= x3 - 1
+so:
+
+y2 <= y3
+Therefore all conditions become:
+
+y1 <= y2 <= y3 <= ... <= y2k
+The largest possible transformed value is:
+
+(n - 1) - k = n - k - 1
+So every yi is between:
+
+0 and n-k-1
+That gives us exactly n-k possible values.
+
+I now need to choose 2k values from these n-k values with repetition allowed and order fixed in non-decreasing form.
+
+The combinations-with-repetition formula is:
+
+C(m + r - 1, r)
+where:
+
+m = n - k
+r = 2k
+Therefore:
+
+C((n-k) + 2k - 1, 2k)
+= C(n+k-1, 2k)
+So the problem is reduced to one binomial coefficient.
+
+For the small example n = 4, k = 2:
+
+answer = C(4 + 2 - 1, 4)
+       = C(5, 4)
+       = 5
+I can see the transformation directly:
+
+Segments                  Transformed endpoints
+
+(0,1), (1,2)              0 0 | 0 0
+(0,1), (1,3)              0 0 | 0 1
+(0,1), (2,3)              0 0 | 1 1
+(0,2), (2,3)              0 1 | 1 1
+(1,2), (2,3)              1 1 | 1 1
+Every transformed sequence is non-decreasing, and every value is from 0 to 1.
+
+So I am choosing four values from:
+
+{0, 1}
+with repetition allowed.
+
+The number of such choices is:
+
+0000
+0001
+0011
+0111
+1111
+which gives exactly 5.
+
+To compute the combination efficiently, I use:
+
+C(N, R) = N! / (R! * (N-R)!)
+under modulo 10^9 + 7.
+
+Because division does not work directly under modulo, I use Fermat's Little Theorem:
+
+a^(-1) = a^(MOD-2) mod MOD
+I also use:
+
+R = min(2k, N - 2k)
+because:
+
+C(N, R) = C(N, N-R)
+This reduces the number of multiplication steps.
+
+**CODE**
+
+
+class Solution {
+public:
+    static const long long MOD = 1000000007LL;
+
+    long long modPow(long long base, long long exp) {
+        long long result = 1;
+
+        while (exp > 0) {
+            if (exp & 1LL) {
+                result = result * base % MOD;
+            }
+
+            base = base * base % MOD;
+
+            exp >>= 1LL;
+        }
+
+        return result;
+    }
+
+    int numberOfSets(int n, int k) {
+        long long N = n + k - 1;
+        long long R = 2LL * k;
+
+        R = min(R, N - R);
+
+        long long numerator = 1;
+        long long denominator = 1;
+
+        for (long long i = 1; i <= R; ++i) {
+            numerator = numerator * (N - R + i) % MOD;
+
+            denominator = denominator * i % MOD;
+        }
+
+        long long inverseDenominator = modPow(denominator, MOD - 2);
+
+        return static_cast<int>(numerator * inverseDenominator % MOD);
+    }
+};
