@@ -1,0 +1,96 @@
+Approach
+I use a sliding window because all array values are positive.
+
+I maintain:
+
+left = start of the current window
+sum = sum of the current window
+best[i] = shortest target-sum sub-array found in arr[0...i]
+answer = minimum total length of two non-overlapping target-sum sub-arrays
+I move right from left to right and add arr[right] to sum.
+
+If sum > target, I move left forward and subtract values from the window until sum <= target.
+
+When sum == target, I found a valid sub-array:
+
+arr = [3, 2, 4, 3]
+target = 3
+
+index:   0   1   2   3
+arr:    [3,  2,  4,  3]
+
+First target sum:
+          [3]
+           ↑
+        length = 1
+
+Second target sum:
+                   [3]
+                    ↑
+                 length = 1
+
+prefix best:
+index:      0   1   2   3
+best:       1   1   1   1
+
+At index 3:
+current sub-array = [3]
+current length    = 1
+
+previous valid part = best[2] = 1
+
+total = 1 + 1 = 2
+
+The important part is best[left - 1].
+
+For the second [3], left = 3, so I look at best[2]. That guarantees that the previous sub-array finishes at index 2 or earlier, so the two sub-arrays cannot overlap.
+
+After processing the current position, I update:
+
+best[right] = min(best[right - 1], currentLength)
+This means best[right] always stores the shortest valid target-sum sub-array seen anywhere up to right.
+
+If there is no valid previous sub-array, I simply do not create a candidate.
+
+At the end, if I never found two valid non-overlapping sub-arrays, I return -1.
+
+CODE:-
+
+class Solution {
+public:
+    int minSumOfLengths(vector<int>& arr, int target) {
+        int n = arr.size();
+
+        vector<int> best(n, INT_MAX);
+
+        int left = 0;
+        int sum = 0;
+        int answer = INT_MAX;
+
+        for (int right = 0; right < n; ++right) {
+            sum += arr[right];
+
+            while (sum > target) {
+                sum -= arr[left];
+                ++left;
+            }
+
+            if (sum == target) {
+                int currentLength = right - left + 1;
+
+                if (left > 0 && best[left - 1] != INT_MAX) {
+                    answer = min(answer,
+                                 currentLength + best[left - 1]);
+                }
+
+                best[right] = currentLength;
+            }
+
+            if (right > 0) {
+                best[right] = min(best[right], best[right - 1]);
+            }
+        }
+
+        return answer == INT_MAX ? -1 : answer;
+    }
+};
